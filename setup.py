@@ -6,6 +6,9 @@ with open('README.md') as f:
 with open('LICENSE') as f:
     license = f.read()
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 setup(
     name='exp_management',
     version='0.0.1',
@@ -15,5 +18,6 @@ setup(
     author_email='geoff.bradway@gmail.com',
     url='https://github.com/zoso95/exp_management',
     license=license,
-    packages=find_packages(exclude=('tests', 'examples'))
+    packages=find_packages(exclude=('tests', 'examples')),
+    install_requires=requirements,
 )
