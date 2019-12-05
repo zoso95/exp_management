@@ -2,16 +2,27 @@ import os
 import json
 from pathlib import Path
 import numpy as np
-
-"""
-
-#TODO think about directory structure
+import pandas as pd
 
 def load(filepath):
     with open(filepath) as json_file:
         data = json.load(json_file)
-    return Parameters(data)
-"""
+    return Parameters(data, filepath)
+
+def combine_parameters(*args):
+    """
+    Combine sets of parameters where the right parameter takes precent over the
+    left.
+    """
+    out = {}
+    sources = []
+    for a in args:
+        d = a.dict()
+        sources.append(d["param_source"])
+        out.update(d)
+    if "param_source" in out:
+        out.pop("param_source")
+    return Parameters(out, sources)
 
 
 class Parameters:
@@ -29,7 +40,10 @@ class Parameters:
     p.dict() gets you the parameter name, and the string used for it.
     """
 
-    def __init__(self, init_values):
+    def __init__(self, init_values, src=None):
+        if src is None:
+            src = "programmatically generated"
+
         super().__setattr__("last_sample", {})
         super().__setattr__("functions", {})
         super().__setattr__("keys", set())
@@ -38,19 +52,14 @@ class Parameters:
         super().__setattr__("_reserved", dir(self))
         for k, v in init_values.items():
             self._add_param(k, v)
+        # Add the source last, so it overrides "programmatically generated" if that
+        # was saved out
+        self._add_param("param_source", src)
+        self.param_source
 
-    """
-    #TODO think about directory structure
-
-    def save(self, filename, output_dir=None):
-
-        path = Path(output_dir)
-        path.mkdir(parents=True, exist_ok=True)
-        full_path = os.path.join(output_dir, filename)
-
-        with open(full_path, "w") as f:
+    def save(self, filepath):
+        with open(filepath, "w") as f:
             f.write(json.dumps(self.dict()))
-    """
 
     def dict(self):
         return self.key_strings
@@ -89,7 +98,7 @@ class Parameters:
             self.last_sample[attr] = v
             return v
         else:
-            return super().__getattr__(attr)
+            return getattr(super(), attr)
 
     def __getitem__(self, key):
         if key in self.keys:
